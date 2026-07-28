@@ -28,11 +28,19 @@ npm run preview
 
 ## 部署
 
+網站：[coscup.xsong.us](https://coscup.xsong.us)
+
 Push 到 `main` 分支後，`.github/workflows/deploy.yml` 會自動建置並部署到 GitHub Pages。
 第一次部署前，請到 repo 的 **Settings → Pages → Build and deployment → Source** 選擇
 **GitHub Actions**。
 
-網站路徑對應 `vite.config.js` 的 `base: '/coscup-session/'`，若 repo 改名需要同步更新。
+自訂網域設定：
+- `public/CNAME` 內容為 `coscup.xsong.us`，build 時會複製到 `dist/CNAME`，讓 GitHub Pages
+  每次部署都記得這個網域
+- DNS 那邊要在管理 `xsong.us` 的服務商新增 `CNAME coscup → 120061203.github.io`
+- `vite.config.js` 的 `base` 設為 `'/'`（因為是獨立網域，不是 project page 的子路徑）
+  若之後拿掉自訂網域改回 `https://120061203.github.io/coscup-session/`，記得把 `base` 改回
+  `'/coscup-session/'`
 
 ## 重新產生感興趣程度種子資料
 
