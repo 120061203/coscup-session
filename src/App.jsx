@@ -24,6 +24,21 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('time')
   const [myThreshold, setMyThreshold] = useState(4)
+  const [filterCollapsed, setFilterCollapsed] = useState(false)
+
+  useEffect(() => {
+    const TOP_THRESHOLD = 10
+    const COLLAPSE_THRESHOLD = 80
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y <= TOP_THRESHOLD) setFilterCollapsed(false)
+      else if (y > COLLAPSE_THRESHOLD) setFilterCollapsed(true)
+      // between the two thresholds: leave whatever state it's in, so a manual
+      // expand near the top isn't immediately fought back to collapsed
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     fetchSessions()
@@ -176,30 +191,41 @@ export default function App() {
       {fromCache && <div className="banner">⚠️ 目前離線中，顯示的是最後一次快取的議程資料</div>}
       {error && <div className="banner banner-error">載入失敗：{error}</div>}
 
-      <FilterBar
-        view={view}
-        setView={setView}
-        timeFilter={timeFilter}
-        setTimeFilter={setTimeFilter}
-        day={day}
-        setDay={setDay}
-        days={days}
-        track={track}
-        setTrack={setTrack}
-        tracks={tracks}
-        building={building}
-        onToggleBuilding={toggleBuilding}
-        buildings={buildings}
-        floor={floor}
-        onToggleFloor={toggleFloor}
-        floors={floors}
-        search={search}
-        setSearch={setSearch}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        myThreshold={myThreshold}
-        setMyThreshold={setMyThreshold}
-      />
+      {filterCollapsed ? (
+        <button
+          type="button"
+          className="filter-collapsed-bar"
+          onClick={() => setFilterCollapsed(false)}
+        >
+          <span>🔍 篩選／排序</span>
+          <span className="chevron">▾</span>
+        </button>
+      ) : (
+        <FilterBar
+          view={view}
+          setView={setView}
+          timeFilter={timeFilter}
+          setTimeFilter={setTimeFilter}
+          day={day}
+          setDay={setDay}
+          days={days}
+          track={track}
+          setTrack={setTrack}
+          tracks={tracks}
+          building={building}
+          onToggleBuilding={toggleBuilding}
+          buildings={buildings}
+          floor={floor}
+          onToggleFloor={toggleFloor}
+          floors={floors}
+          search={search}
+          setSearch={setSearch}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          myThreshold={myThreshold}
+          setMyThreshold={setMyThreshold}
+        />
+      )}
 
       {loading && <p className="status-line">載入議程中…</p>}
       {!loading && renderClusters.length === 0 && <p className="status-line">沒有符合條件的議程</p>}

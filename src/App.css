@@ -60,6 +60,35 @@
   gap: 8px;
 }
 
+.filter-collapsed-bar {
+  position: sticky;
+  top: 44px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-collapsed-bar:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-collapsed-bar .chevron {
+  opacity: 0.6;
+}
+
 .tabs {
   display: flex;
   gap: 6px;
