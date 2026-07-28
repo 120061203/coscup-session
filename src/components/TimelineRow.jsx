@@ -1,7 +1,7 @@
 import SessionCluster from './SessionCluster'
 import { sessionStatus } from '../lib/time'
 
-export default function TimelineRow({ list, conflictCount, interestMap, onRate, now }) {
+export default function TimelineRow({ list, conflictCount, initialIndex, interestMap, onRate, now }) {
   const time = list[0].start.toLocaleTimeString('zh-TW', {
     hour: '2-digit',
     minute: '2-digit',
@@ -20,6 +20,7 @@ export default function TimelineRow({ list, conflictCount, interestMap, onRate, 
         <SessionCluster
           cluster={list}
           conflictCount={conflictCount}
+          initialIndex={initialIndex}
           interestMap={interestMap}
           onRate={onRate}
           now={now}

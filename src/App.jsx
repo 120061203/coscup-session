@@ -119,24 +119,32 @@ export default function App() {
     return list
   }, [sessions, view, day, building, floor, track, search, timeFilter, myThreshold, interestMap, now])
 
-  // Cluster by overlap first (so conflict counts always reflect real overlaps),
-  // then optionally re-flatten into interest-desc order for display.
+// Cluster by overlap first (so conflict counts always reflect real overlaps).
+  // Same-timeslot sessions stay together as one row rendered via a swipeable
+  // carousel — sorting by interest re-orders rows by their best pick and jumps
+  // the carousel to that pick, instead of flattening the cluster apart (which
+  // would scatter conflicting sessions to different places in the list).
   const clusters = useMemo(() => groupByOverlap(filtered), [filtered])
 
-  const displayClusters = useMemo(() => {
-    if (sortBy !== 'interest') return clusters
+  const renderClusters = useMemo(() => {
+    if (sortBy !== 'interest') {
+      return clusters.map((cluster) => ({ list: cluster, conflictCount: cluster.length - 1, initialIndex: 0 }))
+    }
     return clusters
-      .flatMap((cluster) => cluster.map((session) => ({ session, conflictCount: cluster.length - 1 })))
-      .sort((a, b) => (interestMap[b.session.id] || 0) - (interestMap[a.session.id] || 0))
-      .map((entry) => ({ list: [entry.session], conflictCount: entry.conflictCount }))
+      .map((cluster) => {
+        let bestIndex = 0
+        let bestScore = -1
+        cluster.forEach((session, i) => {
+          const score = interestMap[session.id] || 0
+          if (score > bestScore) {
+            bestScore = score
+            bestIndex = i
+          }
+        })
+        return { list: cluster, conflictCount: cluster.length - 1, initialIndex: bestIndex, bestScore }
+      })
+      .sort((a, b) => b.bestScore - a.bestScore)
   }, [clusters, sortBy, interestMap])
-
-  const timeSortedClusters = useMemo(
-    () => clusters.map((cluster) => ({ list: cluster, conflictCount: cluster.length - 1 })),
-    [clusters]
-  )
-
-  const renderClusters = sortBy === 'interest' ? displayClusters : timeSortedClusters
 
   // Insert a day-divider before the first row of each day when browsing
   // multiple days chronologically (dividers don't make sense once sorted by
@@ -207,6 +215,7 @@ export default function App() {
               key={item.list[0].id}
               list={item.list}
               conflictCount={item.conflictCount}
+              initialIndex={item.initialIndex}
               interestMap={interestMap}
               onRate={rate}
               now={now}
