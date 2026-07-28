@@ -20,6 +20,7 @@ export default function App() {
   const [day, setDay] = useState('all')
   const [track, setTrack] = useState('all')
   const [building, setBuilding] = useState('all')
+  const [floor, setFloor] = useState('all')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('time')
   const [myThreshold, setMyThreshold] = useState(4)
@@ -53,6 +54,23 @@ export default function App() {
     return [...new Set(sessions.map((s) => s.location.building).filter(Boolean))].sort()
   }, [sessions])
 
+  const floors = useMemo(() => {
+    if (building === 'all') return []
+    return [
+      ...new Set(
+        sessions
+          .filter((s) => s.location.building === building)
+          .map((s) => s.location.floor)
+          .filter((f) => f != null)
+      ),
+    ].sort((a, b) => a - b)
+  }, [sessions, building])
+
+  const setBuildingAndResetFloor = (b) => {
+    setBuilding(b)
+    setFloor('all')
+  }
+
   const rate = (id, value) => {
     setInterestMap((prev) => {
       const next = { ...prev, [id]: value }
@@ -66,6 +84,7 @@ export default function App() {
 
     if (day !== 'all') list = list.filter((s) => s.day === day)
     if (building !== 'all') list = list.filter((s) => s.location.building === building)
+    if (building !== 'all' && floor !== 'all') list = list.filter((s) => s.location.floor === floor)
 
     if (view === 'my') {
       list = list.filter((s) => (interestMap[s.id] || 0) >= myThreshold)
@@ -92,7 +111,7 @@ export default function App() {
     }
 
     return list
-  }, [sessions, view, day, building, track, search, timeFilter, myThreshold, interestMap, now])
+  }, [sessions, view, day, building, floor, track, search, timeFilter, myThreshold, interestMap, now])
 
   // Cluster by overlap first (so conflict counts always reflect real overlaps),
   // then optionally re-flatten into interest-desc order for display.
@@ -135,8 +154,11 @@ export default function App() {
         setTrack={setTrack}
         tracks={tracks}
         building={building}
-        setBuilding={setBuilding}
+        setBuilding={setBuildingAndResetFloor}
         buildings={buildings}
+        floor={floor}
+        setFloor={setFloor}
+        floors={floors}
         search={search}
         setSearch={setSearch}
         sortBy={sortBy}

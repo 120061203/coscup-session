@@ -12,6 +12,9 @@ export default function FilterBar({
   building,
   setBuilding,
   buildings,
+  floor,
+  setFloor,
+  floors,
   search,
   setSearch,
   sortBy,
@@ -51,6 +54,19 @@ export default function FilterBar({
           </button>
         ))}
       </div>
+
+      {floors.length > 1 && (
+        <div className="tabs floor-tabs">
+          <button className={floor === 'all' ? 'active' : ''} onClick={() => setFloor('all')}>
+            全部樓層
+          </button>
+          {floors.map((f) => (
+            <button key={f} className={floor === f ? 'active' : ''} onClick={() => setFloor(f)}>
+              {f}F
+            </button>
+          ))}
+        </div>
+      )}
 
       {view === 'browse' && (
         <>
