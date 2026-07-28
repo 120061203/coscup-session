@@ -24,3 +24,10 @@ export function sessionStatus(session, now) {
 export function minutesUntil(session, now) {
   return Math.round((session.start.getTime() - now.getTime()) / 60000)
 }
+
+// Day keys are plain "YYYY-MM-DD" strings from the COSCUP API. Compare against
+// Asia/Taipei's calendar date (not the device's local timezone) so "today"
+// means the event's today, regardless of where the device is set.
+export function todayKeyTaipei(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(date)
+}

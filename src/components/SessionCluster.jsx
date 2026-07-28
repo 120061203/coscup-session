@@ -1,25 +1,50 @@
 import { useRef, useState } from 'react'
 import SessionCard from './SessionCard'
 
+// How far (in px) a drag must travel before it commits to the next/previous
+// slide instead of snapping back to the current one.
+const SWIPE_COMMIT_RATIO = 0.2
+const SWIPE_COMMIT_MAX = 80
+// Drag distance is damped past the first/last slide so it still visibly
+// follows the pointer but resists going further, like a rubber band.
+const EDGE_RESISTANCE = 0.35
+
 export default function SessionCluster({ cluster, conflictCount, interestMap, onRate, now, initialIndex = 0 }) {
   const isGrouped = cluster.length > 1
   const [index, setIndex] = useState(Math.min(initialIndex, cluster.length - 1))
-  const touchStartX = useRef(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const pointerStartX = useRef(null)
+  const viewportRef = useRef(null)
 
   const highInterestCount = cluster.filter((s) => (interestMap[s.id] || 0) >= 4).length
-  const current = cluster[index] ?? cluster[0]
 
   const goTo = (i) => setIndex(Math.max(0, Math.min(cluster.length - 1, i)))
 
-  const onTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX
+  const onPointerDown = (e) => {
+    pointerStartX.current = e.clientX
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setDragging(true)
   }
-  const onTouchEnd = (e) => {
-    if (touchStartX.current == null) return
-    const dx = e.changedTouches[0].clientX - touchStartX.current
-    if (dx > 40) goTo(index - 1)
-    else if (dx < -40) goTo(index + 1)
-    touchStartX.current = null
+
+  const onPointerMove = (e) => {
+    if (pointerStartX.current == null) return
+    let dx = e.clientX - pointerStartX.current
+    if ((index === 0 && dx > 0) || (index === cluster.length - 1 && dx < 0)) {
+      dx *= EDGE_RESISTANCE
+    }
+    setDragOffset(dx)
+  }
+
+  const endDrag = () => {
+    if (pointerStartX.current == null) return
+    const width = viewportRef.current?.offsetWidth || 1
+    const threshold = Math.min(SWIPE_COMMIT_MAX, width * SWIPE_COMMIT_RATIO)
+    if (dragOffset > threshold) goTo(index - 1)
+    else if (dragOffset < -threshold) goTo(index + 1)
+    setDragOffset(0)
+    setDragging(false)
+    pointerStartX.current = null
   }
 
   return (
@@ -35,15 +60,33 @@ export default function SessionCluster({ cluster, conflictCount, interestMap, on
         </div>
       )}
 
-      <div className="carousel" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <SessionCard
-          key={current.id}
-          session={current}
-          interest={interestMap[current.id] || 0}
-          onRate={onRate}
-          now={now}
-          conflictCount={conflictCount}
-        />
+      <div
+        className="carousel"
+        ref={viewportRef}
+        onPointerDown={isGrouped ? onPointerDown : undefined}
+        onPointerMove={isGrouped ? onPointerMove : undefined}
+        onPointerUp={isGrouped ? endDrag : undefined}
+        onPointerCancel={isGrouped ? endDrag : undefined}
+      >
+        <div
+          className="carousel-track"
+          style={{
+            transform: `translateX(calc(${-index * 100}% + ${dragOffset}px))`,
+            transition: dragging ? 'none' : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          {cluster.map((session) => (
+            <div className="carousel-slide" key={session.id}>
+              <SessionCard
+                session={session}
+                interest={interestMap[session.id] || 0}
+                onRate={onRate}
+                now={now}
+                conflictCount={conflictCount}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {isGrouped && (

@@ -275,7 +275,23 @@
 }
 
 .carousel {
+  overflow: hidden;
   touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+.carousel:active {
+  cursor: grabbing;
+}
+
+.carousel-track {
+  display: flex;
+  will-change: transform;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
 }
 
 .carousel-nav {

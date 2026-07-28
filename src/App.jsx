@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { fetchSessions } from './lib/coscupApi'
 import { loadInterestMap, saveInterest } from './lib/interest'
 import { groupByOverlap } from './lib/conflicts'
-import { formatDayLabel, sessionStatus, minutesUntil } from './lib/time'
+import { formatDayLabel, sessionStatus, minutesUntil, todayKeyTaipei } from './lib/time'
 import FilterBar from './components/FilterBar'
 import TimelineRow from './components/TimelineRow'
 import './App.css'
@@ -74,6 +74,20 @@ export default function App() {
     const keys = [...new Set(sessions.map((s) => s.day))].sort()
     return keys.map((key) => ({ key, label: formatDayLabel(key) }))
   }, [sessions])
+
+  // Default to today's day tab once the event days are known, so opening the
+  // app on-site during COSCUP goes straight to that day's schedule instead of
+  // a merged view where day 2 is buried at the bottom. Falls back to the
+  // first event day (08/08) outside the event window. Runs once — later
+  // manual day changes aren't overridden.
+  const defaultDayApplied = useRef(false)
+  useEffect(() => {
+    if (defaultDayApplied.current || days.length === 0) return
+    defaultDayApplied.current = true
+    const todayKey = todayKeyTaipei(new Date())
+    const matchesToday = days.some((d) => d.key === todayKey)
+    setDay(matchesToday ? todayKey : days[0].key)
+  }, [days])
 
   const tracks = useMemo(() => {
     return [...new Set(sessions.map((s) => s.track).filter(Boolean))].sort()
