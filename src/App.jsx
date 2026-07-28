@@ -25,20 +25,34 @@ export default function App() {
   const [sortBy, setSortBy] = useState('time')
   const [myThreshold, setMyThreshold] = useState(4)
   const [filterCollapsed, setFilterCollapsed] = useState(false)
+  // 'auto': scroll position drives collapse/expand. 'manual': the user just
+  // toggled it directly, so scroll-driven changes are suppressed until they
+  // scroll back to the very top — otherwise a manual expand while scrolled
+  // down gets immediately fought back to collapsed by the next scroll tick
+  // (even a 1px residual from momentum scrolling, or the layout shift caused
+  // by the panel itself expanding).
+  const [filterMode, setFilterMode] = useState('auto')
 
   useEffect(() => {
     const TOP_THRESHOLD = 10
     const COLLAPSE_THRESHOLD = 80
     const onScroll = () => {
       const y = window.scrollY
-      if (y <= TOP_THRESHOLD) setFilterCollapsed(false)
-      else if (y > COLLAPSE_THRESHOLD) setFilterCollapsed(true)
-      // between the two thresholds: leave whatever state it's in, so a manual
-      // expand near the top isn't immediately fought back to collapsed
+      if (y <= TOP_THRESHOLD) {
+        setFilterCollapsed(false)
+        setFilterMode('auto')
+      } else if (filterMode === 'auto' && y > COLLAPSE_THRESHOLD) {
+        setFilterCollapsed(true)
+      }
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [filterMode])
+
+  const toggleFilterCollapsed = () => {
+    setFilterCollapsed((prev) => !prev)
+    setFilterMode('manual')
+  }
 
   useEffect(() => {
     fetchSessions()
@@ -69,21 +83,36 @@ export default function App() {
     return [...new Set(sessions.map((s) => s.location.building).filter(Boolean))].sort()
   }, [sessions])
 
+  // Buildings whose rooms actually span more than one floor (only TR does —
+  // RB is entirely 1F and AU has no floor at all). The floor filter is a
+  // sub-filter for these buildings specifically, so it stays available and
+  // meaningful regardless of how many other buildings are also selected.
+  const floorGranularBuildings = useMemo(() => {
+    const floorsByBuilding = {}
+    for (const s of sessions) {
+      if (s.location.floor == null) continue
+      ;(floorsByBuilding[s.location.building] ??= new Set()).add(s.location.floor)
+    }
+    return Object.entries(floorsByBuilding)
+      .filter(([, set]) => set.size > 1)
+      .map(([b]) => b)
+  }, [sessions])
+
   const floors = useMemo(() => {
-    if (building.length !== 1) return []
+    const relevant = building.length > 0 ? building.filter((b) => floorGranularBuildings.includes(b)) : floorGranularBuildings
+    if (relevant.length === 0) return []
     return [
       ...new Set(
         sessions
-          .filter((s) => s.location.building === building[0])
+          .filter((s) => relevant.includes(s.location.building))
           .map((s) => s.location.floor)
           .filter((f) => f != null)
       ),
     ].sort((a, b) => a - b)
-  }, [sessions, building])
+  }, [sessions, building, floorGranularBuildings])
 
   const toggleBuilding = (b) => {
     setBuilding((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]))
-    setFloor([])
   }
 
   const toggleFloor = (f) => {
@@ -103,8 +132,12 @@ export default function App() {
 
     if (day !== 'all') list = list.filter((s) => s.day === day)
     if (building.length > 0) list = list.filter((s) => building.includes(s.location.building))
-    if (building.length === 1 && floor.length > 0) {
-      list = list.filter((s) => floor.includes(s.location.floor))
+    if (floor.length > 0) {
+      // Only restricts buildings that actually have floor granularity (TR);
+      // other selected buildings (RB, AU) pass through untouched.
+      list = list.filter(
+        (s) => !floorGranularBuildings.includes(s.location.building) || floor.includes(s.location.floor)
+      )
     }
 
     if (view === 'my') {
@@ -132,7 +165,20 @@ export default function App() {
     }
 
     return list
-  }, [sessions, view, day, building, floor, track, search, timeFilter, myThreshold, interestMap, now])
+  }, [
+    sessions,
+    view,
+    day,
+    building,
+    floor,
+    floorGranularBuildings,
+    track,
+    search,
+    timeFilter,
+    myThreshold,
+    interestMap,
+    now,
+  ])
 
 // Cluster by overlap first (so conflict counts always reflect real overlaps).
   // Same-timeslot sessions stay together as one row rendered via a swipeable
@@ -192,16 +238,13 @@ export default function App() {
       {error && <div className="banner banner-error">載入失敗：{error}</div>}
 
       {filterCollapsed ? (
-        <button
-          type="button"
-          className="filter-collapsed-bar"
-          onClick={() => setFilterCollapsed(false)}
-        >
+        <button type="button" className="filter-collapsed-bar" onClick={toggleFilterCollapsed}>
           <span>🔍 篩選／排序</span>
           <span className="chevron">▾</span>
         </button>
       ) : (
         <FilterBar
+          onCollapse={toggleFilterCollapsed}
           view={view}
           setView={setView}
           timeFilter={timeFilter}

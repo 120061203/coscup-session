@@ -1,4 +1,5 @@
 export default function FilterBar({
+  onCollapse,
   view,
   setView,
   timeFilter,
@@ -24,12 +25,17 @@ export default function FilterBar({
 }) {
   return (
     <div className="filter-bar">
-      <div className="tabs view-tabs">
-        <button className={view === 'browse' ? 'active' : ''} onClick={() => setView('browse')}>
-          總覽
-        </button>
-        <button className={view === 'my' ? 'active' : ''} onClick={() => setView('my')}>
-          我的行程
+      <div className="filter-bar-top">
+        <div className="tabs view-tabs">
+          <button className={view === 'browse' ? 'active' : ''} onClick={() => setView('browse')}>
+            總覽
+          </button>
+          <button className={view === 'my' ? 'active' : ''} onClick={() => setView('my')}>
+            我的行程
+          </button>
+        </div>
+        <button type="button" className="filter-collapse-btn" onClick={onCollapse} aria-label="收合篩選">
+          ▴
         </button>
       </div>
 

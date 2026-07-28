@@ -60,6 +60,29 @@
   gap: 8px;
 }
 
+.filter-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.filter-collapse-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+.filter-collapse-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .filter-collapsed-bar {
   position: sticky;
   top: 44px;
