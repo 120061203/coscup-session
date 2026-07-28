@@ -4,7 +4,7 @@ import { loadInterestMap, saveInterest } from './lib/interest'
 import { groupByOverlap } from './lib/conflicts'
 import { formatDayLabel, sessionStatus, minutesUntil } from './lib/time'
 import FilterBar from './components/FilterBar'
-import SessionCluster from './components/SessionCluster'
+import TimelineRow from './components/TimelineRow'
 import './App.css'
 
 export default function App() {
@@ -138,6 +138,26 @@ export default function App() {
 
   const renderClusters = sortBy === 'interest' ? displayClusters : timeSortedClusters
 
+  // Insert a day-divider before the first row of each day when browsing
+  // multiple days chronologically (dividers don't make sense once sorted by
+  // interest, since rows no longer run in date order).
+  const renderItems = useMemo(() => {
+    if (sortBy === 'interest' || day !== 'all') {
+      return renderClusters.map((row) => ({ type: 'row', ...row }))
+    }
+    const items = []
+    let lastDay = null
+    for (const row of renderClusters) {
+      const rowDay = row.list[0].day
+      if (rowDay !== lastDay) {
+        items.push({ type: 'divider', key: `divider-${rowDay}`, label: formatDayLabel(rowDay) })
+        lastDay = rowDay
+      }
+      items.push({ type: 'row', ...row })
+    }
+    return items
+  }, [renderClusters, sortBy, day])
+
   return (
     <div className="app">
       <header className="app-header">
@@ -177,16 +197,22 @@ export default function App() {
       {!loading && renderClusters.length === 0 && <p className="status-line">沒有符合條件的議程</p>}
 
       <main className="session-list">
-        {renderClusters.map(({ list, conflictCount }) => (
-          <SessionCluster
-            key={list[0].id}
-            cluster={list}
-            conflictCount={conflictCount}
-            interestMap={interestMap}
-            onRate={rate}
-            now={now}
-          />
-        ))}
+        {renderItems.map((item) =>
+          item.type === 'divider' ? (
+            <div key={item.key} className="day-divider">
+              {item.label}
+            </div>
+          ) : (
+            <TimelineRow
+              key={item.list[0].id}
+              list={item.list}
+              conflictCount={item.conflictCount}
+              interestMap={interestMap}
+              onRate={rate}
+              now={now}
+            />
+          )
+        )}
       </main>
     </div>
   )

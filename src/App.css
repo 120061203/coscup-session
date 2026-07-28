@@ -132,8 +132,78 @@
 .session-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
   margin-top: 8px;
+}
+
+.day-divider {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-h);
+  padding: 18px 0 8px 62px;
+}
+
+.timeline-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.timeline-rail {
+  flex: 0 0 52px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline-rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--border);
+  transform: translateX(-50%);
+}
+
+.timeline-time {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  padding: 0 3px;
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
+}
+
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  position: relative;
+  z-index: 1;
+}
+
+.timeline-dot.ongoing {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-bg);
+}
+
+.timeline-dot.past {
+  background: var(--border);
+}
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 16px;
 }
 
 .cluster-header {
