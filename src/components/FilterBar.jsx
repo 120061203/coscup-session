@@ -10,10 +10,10 @@ export default function FilterBar({
   setTrack,
   tracks,
   building,
-  setBuilding,
+  onToggleBuilding,
   buildings,
   floor,
-  setFloor,
+  onToggleFloor,
   floors,
   search,
   setSearch,
@@ -45,23 +45,24 @@ export default function FilterBar({
       </div>
 
       <div className="tabs building-tabs">
-        <button className={building === 'all' ? 'active' : ''} onClick={() => setBuilding('all')}>
+        <button className={building.length === 0 ? 'active' : ''} onClick={() => building.forEach(onToggleBuilding)}>
           全部地點
         </button>
         {buildings.map((b) => (
-          <button key={b} className={building === b ? 'active' : ''} onClick={() => setBuilding(b)}>
+          <button key={b} className={building.includes(b) ? 'active' : ''} onClick={() => onToggleBuilding(b)}>
             {b}
           </button>
         ))}
       </div>
+      {building.length > 1 && <p className="filter-hint">地點為「或」邏輯：符合任一棟即顯示</p>}
 
       {floors.length > 1 && (
         <div className="tabs floor-tabs">
-          <button className={floor === 'all' ? 'active' : ''} onClick={() => setFloor('all')}>
+          <button className={floor.length === 0 ? 'active' : ''} onClick={() => floor.forEach(onToggleFloor)}>
             全部樓層
           </button>
           {floors.map((f) => (
-            <button key={f} className={floor === f ? 'active' : ''} onClick={() => setFloor(f)}>
+            <button key={f} className={floor.includes(f) ? 'active' : ''} onClick={() => onToggleFloor(f)}>
               {f}F
             </button>
           ))}

@@ -93,6 +93,12 @@
   padding: 8px 16px;
 }
 
+.filter-hint {
+  font-size: 12px;
+  opacity: 0.6;
+  margin: -4px 0 0;
+}
+
 .filter-row {
   display: flex;
   gap: 8px;

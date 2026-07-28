@@ -19,8 +19,8 @@ export default function App() {
   const [timeFilter, setTimeFilter] = useState('all')
   const [day, setDay] = useState('all')
   const [track, setTrack] = useState('all')
-  const [building, setBuilding] = useState('all')
-  const [floor, setFloor] = useState('all')
+  const [building, setBuilding] = useState([])
+  const [floor, setFloor] = useState([])
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('time')
   const [myThreshold, setMyThreshold] = useState(4)
@@ -55,20 +55,24 @@ export default function App() {
   }, [sessions])
 
   const floors = useMemo(() => {
-    if (building === 'all') return []
+    if (building.length !== 1) return []
     return [
       ...new Set(
         sessions
-          .filter((s) => s.location.building === building)
+          .filter((s) => s.location.building === building[0])
           .map((s) => s.location.floor)
           .filter((f) => f != null)
       ),
     ].sort((a, b) => a - b)
   }, [sessions, building])
 
-  const setBuildingAndResetFloor = (b) => {
-    setBuilding(b)
-    setFloor('all')
+  const toggleBuilding = (b) => {
+    setBuilding((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]))
+    setFloor([])
+  }
+
+  const toggleFloor = (f) => {
+    setFloor((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]))
   }
 
   const rate = (id, value) => {
@@ -83,8 +87,10 @@ export default function App() {
     let list = sessions
 
     if (day !== 'all') list = list.filter((s) => s.day === day)
-    if (building !== 'all') list = list.filter((s) => s.location.building === building)
-    if (building !== 'all' && floor !== 'all') list = list.filter((s) => s.location.floor === floor)
+    if (building.length > 0) list = list.filter((s) => building.includes(s.location.building))
+    if (building.length === 1 && floor.length > 0) {
+      list = list.filter((s) => floor.includes(s.location.floor))
+    }
 
     if (view === 'my') {
       list = list.filter((s) => (interestMap[s.id] || 0) >= myThreshold)
@@ -154,10 +160,10 @@ export default function App() {
         setTrack={setTrack}
         tracks={tracks}
         building={building}
-        setBuilding={setBuildingAndResetFloor}
+        onToggleBuilding={toggleBuilding}
         buildings={buildings}
         floor={floor}
-        setFloor={setFloor}
+        onToggleFloor={toggleFloor}
         floors={floors}
         search={search}
         setSearch={setSearch}
